@@ -35,17 +35,63 @@ process:
 # SHA256 integrity is enforced in Rust via trust-on-first-use, not here.
 
 network_policies:
-  claude_code:
-    name: claude-code
+  pi:
+    name: pi
     endpoints:
-      - { host: api.anthropic.com, port: 443, protocol: rest, enforcement: enforce, access: full, tls: terminate }
-      - { host: statsig.anthropic.com, port: 443 }
-      - { host: sentry.io, port: 443 }
-      - { host: raw.githubusercontent.com, port: 443 }
+      # API-key providers
+      - { host: api.anthropic.com, port: 443 }
+      - { host: api.openai.com, port: 443 }
+      - { host: api.deepseek.com, port: 443 }
+      - { host: generativelanguage.googleapis.com, port: 443 }
+      - { host: api.mistral.ai, port: 443 }
+      - { host: api.groq.com, port: 443 }
+      - { host: api.cerebras.ai, port: 443 }
+      - { host: api.x.ai, port: 443 }
+      - { host: openrouter.ai, port: 443 }
+      - { host: ai-gateway.vercel.sh, port: 443 }
+      - { host: router.huggingface.co, port: 443 }
+      - { host: api.fireworks.ai, port: 443 }
+      - { host: api.together.ai, port: 443 }
+      - { host: api.kimi.com, port: 443 }
+      - { host: api.moonshot.ai, port: 443 }
+      - { host: api.moonshot.cn, port: 443 }
+      - { host: api.minimax.io, port: 443 }
+      - { host: api.minimaxi.com, port: 443 }
+      - { host: api.xiaomimimo.com, port: 443 }
+      - { host: token-plan-cn.xiaomimimo.com, port: 443 }
+      - { host: token-plan-ams.xiaomimimo.com, port: 443 }
+      - { host: token-plan-sgp.xiaomimimo.com, port: 443 }
+      - { host: api.z.ai, port: 443 }
+      - { host: opencode.ai, port: 443 }
+      # Cloud providers
+      - { host: bedrock-runtime.us-east-1.amazonaws.com, port: 443 }
+      - { host: bedrock-runtime.eu-central-1.amazonaws.com, port: 443 }
+      - { host: api.cloudflare.com, port: 443 }
+      - { host: gateway.ai.cloudflare.com, port: 443 }
+      # Add region-specific Vertex AI hosts here if needed, e.g.:
+      # - { host: us-central1-aiplatform.googleapis.com, port: 443 }
+      # Subscription login / token refresh endpoints
+      - { host: claude.ai, port: 443 }
       - { host: platform.claude.com, port: 443 }
+      - { host: auth.openai.com, port: 443 }
+      - { host: chatgpt.com, port: 443 }
+      - { host: github.com, port: 443 }
+      - { host: api.github.com, port: 443 }
+      # pi downloads managed fd/ripgrep binaries from GitHub release assets.
+      - { host: release-assets.githubusercontent.com, port: 443 }
+      - { host: api.githubcopilot.com, port: 443 }
+      - { host: api.individual.githubcopilot.com, port: 443 }
+      - { host: api.business.githubcopilot.com, port: 443 }
+      - { host: api.enterprise.githubcopilot.com, port: 443 }
+      - { host: copilot-proxy.githubusercontent.com, port: 443 }
+      - { host: default.exp-tas.com, port: 443 }
     binaries:
-      - { path: /usr/local/bin/claude }
+      - { path: /usr/bin/pi }
+      - { path: /usr/local/bin/pi }
+      - { path: /usr/lib/node_modules/@earendil-works/pi-coding-agent/dist/cli.js }
+      - { path: /usr/local/lib/node_modules/@earendil-works/pi-coding-agent/dist/cli.js }
       - { path: /usr/bin/node }
+      - { path: /usr/local/bin/node }
 
   github_ssh_over_https:
     name: github-ssh-over-https
@@ -79,7 +125,6 @@ network_policies:
     binaries:
       - { path: /usr/bin/curl }
       - { path: /bin/bash }
-      - { path: /usr/local/bin/opencode }
 
   # --- GitHub REST API (read-only) ---
   github_rest_api:
@@ -92,32 +137,7 @@ network_policies:
         enforcement: enforce
         access: read-only
     binaries:
-      - { path: /usr/local/bin/claude }
       - { path: /usr/bin/gh }
-
-  # --- GitHub Copilot API ---
-  # Endpoints from https://docs.github.com/en/copilot/reference/copilot-allowlist-reference
-  copilot:
-    name: copilot
-    endpoints:
-      # Auth and user management
-      - { host: github.com, port: 443 }
-      - { host: api.github.com, port: 443 }
-      # Copilot API (subscription-tier routing)
-      - { host: api.githubcopilot.com, port: 443, protocol: rest, enforcement: enforce, access: read-write }
-      - { host: api.individual.githubcopilot.com, port: 443, protocol: rest, enforcement: enforce, access: read-write }
-      - { host: api.business.githubcopilot.com, port: 443, protocol: rest, enforcement: enforce, access: read-write }
-      - { host: api.enterprise.githubcopilot.com, port: 443, protocol: rest, enforcement: enforce, access: read-write }
-      # Model proxy
-      - { host: copilot-proxy.githubusercontent.com, port: 443, protocol: rest, enforcement: enforce, access: read-write }
-      # Telemetry, feature flags, updates
-      - { host: origin-tracker.githubusercontent.com, port: 443 }
-      - { host: telemetry.enterprise.githubcopilot.com, port: 443 }
-      - { host: default.exp-tas.com, port: 443 }
-      - { host: release-assets.githubusercontent.com, port: 443 }
-    binaries:
-      - { path: /usr/bin/copilot }
-      - { path: "/usr/lib/node_modules/@github/copilot/node_modules/@github/**/copilot" }
 
   pypi:
     name: pypi
@@ -169,28 +189,3 @@ network_policies:
       - { path: /usr/bin/curl }
       - { path: /usr/bin/wget }
       - { path: "/sandbox/.cursor-server/**" }
-
-  opencode:
-    name: opencode
-    endpoints:
-    - host: registry.npmjs.org
-      port: 443
-    - host: opencode.ai
-      port: 443
-    - host: integrate.api.nvidia.com
-      port: 443
-    binaries:
-    - path: /usr/lib/node_modules/opencode-ai/bin/.opencode
-    - path: /usr/bin/node
-    - path: /usr/local/bin/opencode
-
-  codex:
-    name: codex
-    endpoints:
-      - { host: api.openai.com,  port: 443 }
-      - { host: auth.openai.com, port: 443 }
-      - { host: chatgpt.com,     port: 443 }
-    binaries:
-      - { path: /usr/bin/codex }
-      - { path: /usr/bin/node }
-      - { path: "/usr/lib/node_modules/@openai/**" }

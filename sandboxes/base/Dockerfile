@@ -21,7 +21,8 @@ WORKDIR /sandbox
 
 # Core system dependencies
 # iproute2: network namespace management (ip netns, veth pairs)
-# iptables: bypass detection — LOG + REJECT rules for direct connection diagnostics
+# iptables: legacy bypass detection (kept for transition)
+# nftables: bypass detection — log + reject rules for direct connection diagnostics
 # dnsutils: dig, nslookup
 # Python is managed entirely by uv (see devtools stage).
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -30,6 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         dnsutils \
         iproute2 \
         iptables \
+        nftables \
         iputils-ping \
         net-tools \
         netcat-openbsd \
@@ -74,7 +76,8 @@ RUN npm install -g \
         tar@7.5.11 \
         @hono/node-server@1.19.11 \
         opencode-ai@1.2.18 \
-        @openai/codex@0.111.0
+        @openai/codex@0.117.0 \
+        @github/copilot@1.0.16
 
 # GitHub CLI
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
@@ -93,9 +96,9 @@ RUN curl -fsSL https://claude.ai/install.sh | bash \
 # uv manages the Python toolchain; no system Python packages are needed.
 COPY --from=ghcr.io/astral-sh/uv:0.10.8 /uv /usr/local/bin/uv
 ENV UV_PYTHON_INSTALL_DIR="/sandbox/.uv/python"
-RUN uv python install 3.13 && \
-    ln -s $(uv python find 3.13) /usr/local/bin/python3 && \
-    ln -s $(uv python find 3.13) /usr/local/bin/python && \
+RUN uv python install 3.14.3 && \
+    ln -s $(uv python find 3.14.3) /usr/local/bin/python3 && \
+    ln -s $(uv python find 3.14.3) /usr/local/bin/python && \
     uv cache clean
 
 # Final base image
@@ -119,10 +122,10 @@ COPY skills/ /sandbox/.agents/skills/
 
 # Set up sandbox user home directory
 RUN mkdir -p /sandbox/.claude/skills && \
-    # Create a writable venv using uv-managed Python 3.13.
+    # Create a writable venv using uv-managed Python 3.14.3.
     # Sandbox users can `uv pip install` (or `pip install`) into
     # this venv without touching the base image layer.
-    uv venv --python 3.13 --seed /sandbox/.venv && \
+    uv venv --python 3.14.3 --seed /sandbox/.venv && \
     uv pip install --python /sandbox/.venv/bin/python cloudpickle && \
     uv cache clean && \
     chown -R sandbox:sandbox /sandbox/.venv && \
